@@ -1,4 +1,4 @@
-import pygame, time, random
+import pygame, time, random, shelve
 (width, height) = (1200, 800)
 pos_x, pos_y = 200, 100
 velocity = 0
@@ -13,6 +13,12 @@ screen.fill((0, 181, 204))
 # Step 1: Load a font (size 36 here)
 font = pygame.font.SysFont("Arial", 36)
 
+d = shelve.open('score.txt')  # here you will save the score variable   
+try:
+    highscore = d['score']  # the score is read from disk
+except: 
+    d['score'] = 0
+    highscore = 0
 
 def applyGravity(dt):
     global velocity
@@ -24,8 +30,8 @@ def applyJump():
     velocity = -12
 
 def createPipe():
-    topSectionHeight = random.randint(100, 400)
-    passageHeight = random.randint(300, 400)
+    topSectionHeight = random.randint(100, 300)
+    passageHeight = random.randint(250, 400)
     pipeConfig = [1200, topSectionHeight, passageHeight, False] #[x, topSectionHeight, passageHeight, scored]
     pipes.append(pipeConfig)
 
@@ -35,7 +41,7 @@ def drawPipe(pipeConfig):
     pygame.draw.rect(screen,(200,80,100),(pipeConfig[0],0+pipeConfig[1]+ pipeConfig[2],100,800), border_radius = 10)
 
 def movePipe(pipeConfig):
-    pipeConfig[0] = pipeConfig[0] - 2.5 * dt
+    pipeConfig[0] = pipeConfig[0] - 3 * dt
     if pipeConfig[0]==-100:
         pipes.remove(pipeConfig)
 
@@ -75,8 +81,10 @@ def checkScore():
             score +=1
             pipe[3]  = True
 
+    scoreboard = font.render(f"highscore: {highscore}", True, (255, 255, 255))  # White text
+    screen.blit(scoreboard, (950, 25))
     scoreboard = font.render(f"score: {score}", True, (255, 255, 255))  # White text
-    screen.blit(scoreboard, (100, 100))
+    screen.blit(scoreboard, (750, 25))
 
 last_time = time.time()
 clock = pygame.time.Clock()
@@ -121,12 +129,15 @@ while running:
     
     pygame.draw.circle(screen, (200,80,100), (pos_x,pos_y), 30)
     pygame.display.flip()
- 
-try:
+
+if score > highscore:
+    d['score'] = score
+d.close()
+print(f"Highscore: {highscore}")
+print(f"Your score: {score}")
+
+try: 
     pygame.quit()
     print("Quitted pygame")
 except Exception as e:
     print("Error quitting pygame:", e)
-#print("system shutdown")
-#import sys
-#sys.exit() 
