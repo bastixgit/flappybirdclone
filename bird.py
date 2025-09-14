@@ -6,7 +6,7 @@ jumped = False
 pipes = []
 global score
 score = 0
-pygame.init()
+pygame.font.init()
 screen = pygame.display.set_mode((width, height))
 screen.fill((0, 181, 204))
 
@@ -31,32 +31,41 @@ def createPipe():
 
 def drawPipe(pipeConfig):
 
-    pygame.draw.rect(screen,(200,80,100),(pipeConfig[0],0,100,pipeConfig[1]), border_bottom_left_radius = 30, border_bottom_right_radius = 30)
-    pygame.draw.rect(screen,(200,80,100),(pipeConfig[0],0+pipeConfig[1]+ pipeConfig[2],100,800), border_radius = 30)
+    pygame.draw.rect(screen,(200,80,100),(pipeConfig[0],0,100,pipeConfig[1]), border_bottom_left_radius = 10, border_bottom_right_radius = 10)
+    pygame.draw.rect(screen,(200,80,100),(pipeConfig[0],0+pipeConfig[1]+ pipeConfig[2],100,800), border_radius = 10)
 
 def movePipe(pipeConfig):
     pipeConfig[0] = pipeConfig[0] - 2.5 * dt
     if pipeConfig[0]==-100:
         pipes.remove(pipeConfig)
 
+def circleRectCollision(cx, cy, radius, rx, ry, rw, rh):
+    # Find the closest point on the rectangle to the circle center
+    closest_x = max(rx, min(cx, rx + rw))
+    closest_y = max(ry, min(cy, ry + rh))
+
+    # Calculate distance from circle center to closest point
+    distance_x = cx - closest_x
+    distance_y = cy - closest_y
+
+    # If the distance is less than the radius, there's a collision
+    return (distance_x**2 + distance_y**2) < (radius**2)
+
 def checkCollision():
-    global closest_pipe
-    current_min_distance = 1000
-    closest_pipe = None
+    global running
+    radius = 30
     for pipe in pipes:
-        if pipe[0]>pos_x-115:
-            distance = pipe[0] - pos_x
-            if distance < current_min_distance:
-                current_min_distance = distance
-                closest_pipe = pipe
-    # checke ob die pipe in den x koordinationen zwischen 185 und 215 ist heißt ob closestPipe[0] zwischen 185 bis 115 ist
-    if closest_pipe[0]<185 and closest_pipe[0]>115:
-    # wenn das der Fall finde die y koordinaten des gateways (zwischen topSectionHeight und topSectionHeight + passageHeight)
-        gatewayTop = closest_pipe[1]
-        gatewayBottom = gatewayTop + closest_pipe[2]
-     # dannach schaue ob die spieler y Koordinate + - 15 außerhalb des gateway berecih liegt
-        if pos_y-15 > gatewayBottom or pos_y+15<gatewayTop:
-            global running
+        pipe_x = pipe[0]
+        top_height = pipe[1]
+        gap_height = pipe[2]
+
+        # Top pipe rectangle: (pipe_x, 0, 100, top_height)
+        top_collision = circleRectCollision(pos_x, pos_y, radius, pipe_x, 0, 100, top_height)
+
+        # Bottom pipe rectangle: (pipe_x, top_height + gap_height, 100, height)
+        bottom_collision = circleRectCollision(pos_x, pos_y, radius, pipe_x, top_height + gap_height, 100, height)
+
+        if top_collision or bottom_collision:
             running = False
 
 def checkScore():
@@ -112,5 +121,12 @@ while running:
     
     pygame.draw.circle(screen, (200,80,100), (pos_x,pos_y), 30)
     pygame.display.flip()
-
-pygame.quit()
+ 
+try:
+    pygame.quit()
+    print("Quitted pygame")
+except Exception as e:
+    print("Error quitting pygame:", e)
+#print("system shutdown")
+#import sys
+#sys.exit() 
